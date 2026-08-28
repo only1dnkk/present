@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Masha // 14 Experience</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #030305;
+      --accent: #a855f7;
+      --accent-blue: #3b82f6;
+      --text: #ffffff;
+      --text-dim: #9ca3af;
+      --font-title: 'Syne', sans-serif;
+      --font-body: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      height: 100vh;
+      overflow: hidden; /* Запрещаем обычную прокрутку */
+      position: relative;
+    }
+
+    /* Анимированный 3D фон */
+    canvas#spaceCanvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Индикатор прогресса (Как в Instagram Stories) */
+    .story-progress {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(90%, 500px);
+      display: flex;
+      gap: 8px;
+      z-index: 10;
+    }
+    .progress-step {
+      height: 4px;
+      flex: 1;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-blue));
+      transition: width 0.4s ease;
+    }
+
+    /* ЭКРАНЫ / СЛАЙДЫ */
+    .viewport {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      perspective: 1200px; /* Глубина для 3D переходов */
+      z-index: 1;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 30px 24px;
+      text-align: center;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateZ(-200px) rotateX(15deg);
+      transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: none;
+    }
+
+    /* Активный слайд */
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translateZ(0) rotateX(0deg);
+      pointer-events: auto;
+    }
+
+    /* Прошедший слайд (улетает вверх) */
+    .slide.passed {
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-100%) rotateX(-20deg) scale(0.9);
+    }
+
+    /* Контентные карточки */
+    .content-box {
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 32px;
+      padding: clamp(30px, 5vw, 60px);
+      max-width: 650px;
+      width: 100%;
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(168, 85, 247, 0.15);
+    }
+
+    .tag {
+      font-family: var(--font-title);
+      font-size: 0.8rem;
+      letter-spacing: 2px;
+      color: var(--accent-blue);
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+
+    h1, h2 {
+      font-family: var(--font-title);
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 20px;
+    }
+    h1 { font-size: clamp(2.5rem, 8vw, 4.5rem); }
+    h2 { font-size: clamp(2rem, 6vw, 3rem); }
+
+    .glow-text {
+      background: linear-gradient(135deg, #fff 0%, var(--accent) 50%, var(--accent-blue) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    p.description {
+      color: var(--text-dim);
+      font-size: clamp(1rem, 2.5vw, 1.2rem);
+      line-height: 1.7;
+      margin-bottom: 30px;
+    }
+
+    /* Кнопки навигации */
+    .controls {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 16px;
+      z-index: 10;
+    }
+
+    .btn {
+      background: #ffffff;
+      color: #000;
+      border: none;
+      padding: 16px 36px;
+      border-radius: 100px;
+      font-family: var(--font-title);
+      font-weight: 800;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 0 25px rgba(255, 255, 255, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 35px rgba(168, 85, 247, 0.6);
+    }
+    .btn:active { transform: scale(0.95); }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: none;
+    }
+    .btn-secondary:hover { background: rgba(255, 255, 255, 0.15); box-shadow: none; }
+
+    /* Полароид фото-блок */
+    .polaroid {
+      background: #fff;
+      padding: 12px 12px 24px 12px;
+      border-radius: 12px;
+      transform: rotate(-3deg);
+      margin: 20px auto;
+      max-width: 260px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+    }
+    .polaroid img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 6px;
+      background: #222;
+    }
+    .polaroid caption {
+      display: block;
+      color: #222;
+      font-family: var(--font-title);
+      font-size: 0.85rem;
+      margin-top: 10px;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="spaceCanvas"></canvas>
+
+  <div class="story-progress" id="progressContainer"></div>
+
+  <div class="viewport">
+
+    <section class="slide active">
+      <div class="content-box">
+        <div class="tag">// CHAPTER 14.0</div>
+        <h1><span class="glow-text">Маша,</span><br>с днём рождения!</h1>
+        <p class="description">Это не просто обычная страница в интернете, а твой личный интерактивный уголок. Нажимай кнопку ниже, чтобы листать дальше.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="content-box">
+        <div class="tag">// MEMORIES & VIBE</div>
+        <h2>Твой 14-й уровень</h2>
+        
+        <div class="polaroid">
+          <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500&q=80" alt="Masha">
+          <caption>AESTHETIC LEVEL UNLOCKED</caption>
+        </div>
+
+        <p class="description">Пусть этот год будет наполнен крутыми моментами, любимой музыкой и людьми, которые вдохновляют.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="content-box">
+        <div class="tag">// WISHES</div>
+        <h2>Сияй ярко</h2>
+        <p class="description" style="font-size: 1.15rem; color: #fff;">
+          Желаю тебе никогда не сомневаться в себе, мечтать о самом масштабном и оставаться такой же уникальной.<br><br>
+          Пусть всё, что ты задумываешь, получается легко и с кайфом!
+        </p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="content-box">
+        <div class="tag">// THE SURPRISE</div>
+        <h2>А теперь... <span class="glow-text">Сюрприз!</span></h2>
+        <p class="description">Я решил не ограничиваться просто сайтом. Специально для тебя я приготовил отдельную игру!</p>
+        
+        <button class="btn" onclick="triggerConfetti()" style="margin: 0 auto 16px;">
+          Запустить салют 🎆
+        </button>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-secondary" id="prevBtn" onclick="changeSlide(-1)" style="display: none;">Назад</button>
+    <button class="btn" id="nextBtn" onclick="changeSlide(1)">Далее ➔</button>
+  </div>
+
+  <script>
+    const slides = document.querySelectorAll('.slide');
+    const progressContainer = document.getElementById('progressContainer');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    let currentSlide = 0;
+
+    slides.forEach((_, index) => {
+      const step = document.createElement('div');
+      step.className = 'progress-step';
+      step.innerHTML = `<div class="progress-fill" id="fill-${index}"></div>`;
+      progressContainer.appendChild(step);
+    });
+
+    function updateProgress() {
+      slides.forEach((_, index) => {
+        const fill = document.getElementById(`fill-${index}`);
+        if (index < currentSlide) fill.style.width = '100%';
+        else if (index === currentSlide) fill.style.width = '100%';
+        else fill.style.width = '0%';
+      });
+
+      prevBtn.style.display = currentSlide === 0 ? 'none' : 'flex';
+      
+      if (currentSlide === slides.length - 1) {
+        nextBtn.textContent = 'ИГРАТЬ В ИГРУ 🎮';
+      } else {
+        nextBtn.textContent = 'Далее ➔';
+      }
+    }
+
+    function changeSlide(direction) {
+      if (direction === 1 && currentSlide === slides.length - 1) {
+        window.location.href = 'game.html';
+        return;
+      }
+
+      slides[currentSlide].classList.remove('active');
+      if (direction === 1) {
+        slides[currentSlide].classList.add('passed');
+      }
+
+      currentSlide += direction;
+
+      if (direction === -1) {
+        slides[currentSlide].classList.remove('passed');
+      }
+
+      slides[currentSlide].classList.add('active');
+      updateProgress();
+    }
+
+    updateProgress();
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        if (currentSlide < slides.length - 1) changeSlide(1);
+      } else if (e.key === 'ArrowLeft') {
+        if (currentSlide > 0) changeSlide(-1);
+      }
+    });
+
+    const canvas = document.getElementById('spaceCanvas');
+    const ctx = canvas.getContext('2d');
+    let width, height, particles = [];
+
+    function resize() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    for (let i = 0; i < 70; i++) {
+      particles.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        r: Math.random() * 2 + 0.5,
+        alpha: Math.random(),
+        speed: Math.random() * 0.02 + 0.005
+      });
+    }
+
+    function animateStars() {
+      ctx.clearRect(0, 0, width, height);
+      particles.forEach(p => {
+        p.alpha += p.speed;
+        if (p.alpha > 1 || p.alpha < 0) p.speed = -p.speed;
+        ctx.fillStyle = `rgba(168, 85, 247, ${Math.abs(p.alpha)})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      requestAnimationFrame(animateStars);
+    }
+    animateStars();
+
+    function triggerConfetti() {
+      for (let i = 0; i < 40; i++) {
+        const p = document.createElement('div');
+        p.style.position = 'fixed';
+        p.style.left = '50vw';
+        p.style.top = '50vh';
+        p.style.width = '8px';
+        p.style.height = '8px';
+        p.style.backgroundColor = ['#a855f7', '#3b82f6', '#ffffff', '#ec4899'][Math.floor(Math.random() * 4)];
+        p.style.borderRadius = '50%';
+        p.style.pointerEvents = 'none';
+        p.style.zIndex = '999';
+        document.body.appendChild(p);
+
+        const angle = Math.random() * Math.PI * 2;
+        const velocity = 100 + Math.random() * 200;
+        const tx = Math.cos(angle) * velocity;
+        const ty = Math.sin(angle) * velocity;
+
+        p.animate([
+          { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+          { transform: `translate(${tx}px, ${ty}px) scale(0)`, opacity: 0 }
+        ], {
+          duration: 1000 + Math.random() * 500,
+          easing: 'cubic-bezier(0, .9, .57, 1)'
+        }).onfinish = () => p.remove();
+      }
+    }
+  </script>
+</body>
+</html>
