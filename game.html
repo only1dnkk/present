@@ -144,42 +144,46 @@
   }
   .table .table-art { width:100%; display:block; filter:drop-shadow(0 20px 25px rgba(0,0,0,0.6)); }
   
-  /* ТОРТ (Ровно на столе) */
+  /* ТОРТ — привязан к столешнице внутри SVG стола */
   #decor-cake {
     position: absolute;
-    bottom: 90px; /* Точная высота столешницы */
     left: 50%;
+    bottom: 62px;
     width: 65%;
     transform: translateX(-50%) scale(0.5);
+    transform-origin: center bottom;
     filter: drop-shadow(0 10px 15px rgba(0,0,0,0.4));
+    z-index: 5;
   }
   #decor-cake.active { transform: translateX(-50%) scale(1); }
 
   /* ============ ДЕВОЧКА И КОРОНА ============ */
   .girl-container {
     position: absolute;
-    bottom: 20%; /* Уровень плинтуса */
-    margin-bottom: -15px; /* Тень ровно на полу */
+    bottom: calc(20% - 20px); /* Низ изображения совпадает с линией пола */
+    margin-bottom: 0;
     left: 50%;
     transform: translateX(-50%);
     width: clamp(200px, 28vw, 320px);
     z-index: 5;
     pointer-events: none;
     /* Легкое покачивание (дыхание) */
-    animation: floatBreath 3s ease-in-out infinite alternate;
+    animation: none;
   }
-  @keyframes floatBreath { 0% { transform:translateX(-50%) translateY(0);} 100% { transform:translateX(-50%) translateY(-5px);} }
+  @keyframes floatBreath { from { transform:translateX(-50%) translateY(0);} to { transform:translateX(-50%) translateY(0);} }
   .girl-container svg.girl-art { width:100%; height:auto; display:block; overflow:visible; }
 
-  /* Корона (Чётко на голове) */
+  /* Корона — масштабируется вместе с девочкой и сидит над макушкой */
   #decor-crown {
     position: absolute;
-    top: 50px; /* Идеальная высота для макушки */
+    top: 4%;
     left: 50%;
+    transform: translateX(-50%);
     transform-origin: center bottom;
-    width: clamp(45px, 6vw, 65px);
+    width: 20%;
+    aspect-ratio: 100 / 80;
     z-index: 7;
-    margin-left: -32.5px; /* Половина ширины для точного центра */
+    margin-left: 0;
     opacity: 0;
   }
   #decor-crown.active {
@@ -191,8 +195,8 @@
     100% { filter: drop-shadow(0 0 15px rgba(255,198,92,1)); }
   }
   @keyframes popInCrown {
-    0% { transform: scale(0) translateY(-20px); }
-    100% { transform: scale(1) translateY(0); }
+    0% { transform: translateX(-50%) scale(0) translateY(-20px); }
+    100% { transform: translateX(-50%) scale(1) translateY(0); }
   }
 
   /* ============ КЛИКИ / UI ============ */
@@ -272,10 +276,82 @@
   .final-title { font-family: var(--font-title); font-size: 2.2rem; margin-bottom: 15px; color: var(--gold); }
   .final-text { color: #e0d5ec; font-size: 1.05rem; line-height: 1.7; margin-bottom: 25px; }
 
+
   @media (max-width: 768px) {
+    .girl-container { width: clamp(190px, 52vw, 280px); }
+    #decor-crown { width: 20%; top: 4%; }
+    #decor-cake { width: 68%; }
+    #decor-cat { width: 32%; }
+
     body { flex-direction: column; }
-    .game-viewport { height: 60vh; }
-    .shop-panel { width: 100%; height: 40vh; padding: 16px; }
+    .game-viewport { height: 56vh; min-height: 0; }
+
+    .shop-panel {
+      width: 100%;
+      height: 44vh;
+      min-height: 0;
+      padding: 10px 12px 12px;
+      border-left: 0;
+      border-top: 1px solid var(--border);
+      box-shadow: 0 -12px 35px rgba(0,0,0,0.55);
+      gap: 0;
+    }
+
+    .coin-counter {
+      padding: 9px 12px;
+      border-radius: 12px;
+      margin-bottom: 7px;
+      min-height: 42px;
+    }
+    .coin-counter span:first-child { font-size: 0.78rem; }
+    .coin-amount { font-size: 1.25rem; gap: 5px; }
+
+    .progress-track { height: 5px; margin-bottom: 8px; }
+    .shop-title { font-size: 0.75rem; margin-bottom: 6px; letter-spacing: 0.8px; }
+
+    .items-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-auto-rows: minmax(58px, 1fr);
+      gap: 7px;
+      padding-right: 0;
+      overflow-y: auto;
+      min-height: 0;
+    }
+
+    .shop-item {
+      min-width: 0;
+      padding: 8px;
+      border-radius: 12px;
+      gap: 7px;
+      min-height: 58px;
+    }
+
+    .item-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      font-size: 19px;
+    }
+    .item-name {
+      font-size: 0.72rem;
+      line-height: 1.15;
+      margin-bottom: 2px;
+    }
+    .item-cost { font-size: 0.68rem; }
+
+    .buy-btn {
+      padding: 7px 9px;
+      min-width: 54px;
+      font-size: 0.66rem;
+    }
+  }
+
+  @media (max-width: 390px) {
+    .game-viewport { height: 54vh; }
+    .shop-panel { height: 46vh; padding: 8px 10px 10px; }
+    .items-list { grid-template-columns: 1fr; grid-auto-rows: minmax(52px, auto); }
+    .shop-item { min-height: 52px; }
   }
 </style>
 </head>
